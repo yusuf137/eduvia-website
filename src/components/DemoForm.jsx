@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../firebase/firebaseConfig";
 
 const initialForm = {
   kurumAdi: "",
@@ -43,25 +45,82 @@ function SuccessMessage({ onReset }) {
   );
 }
 
+function validateForm(form) {
+  const institutionName = form.kurumAdi.trim();
+  const contactName = form.yetkiliAdi.trim();
+  const phone = form.telefon.trim();
+  const email = form.email.trim();
+
+  if (!institutionName || !contactName || !phone || !email) {
+    return "Lütfen zorunlu alanları doldurun.";
+  }
+  if (!email.includes("@")) {
+    return "Geçerli bir e-posta adresi girin.";
+  }
+  if (!phone) {
+    return "Telefon alanı boş olamaz.";
+  }
+  return null;
+}
+
 export default function DemoForm() {
   const [form, setForm] = useState(initialForm);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    if (error) setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Demo talep formu:", form);
-    setSubmitted(true);
-    setForm(initialForm);
+    if (submitting) return;
+
+    const validationError = validateForm(form);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    const requestData = {
+      institutionName: form.kurumAdi.trim(),
+      contactName: form.yetkiliAdi.trim(),
+      phone: form.telefon.trim(),
+      email: form.email.trim(),
+      institutionType: form.kurumTuru,
+      studentCount: form.ogrenciSayisi,
+      message: form.mesaj.trim(),
+      source: "website",
+      status: "new",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
+    console.log("DEMO REQUEST DATA:", requestData);
+
+    setSubmitting(true);
+    setError("");
+
+    try {
+      await addDoc(collection(db, "demoRequests"), requestData);
+      console.log("DEMO REQUEST SUCCESS");
+      setSubmitted(true);
+      setForm(initialForm);
+    } catch (err) {
+      console.log("DEMO REQUEST ERROR:", err.code, err.message);
+      setError("Talep gönderilirken bir sorun oluştu. Lütfen tekrar deneyin.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleReset = () => {
     setSubmitted(false);
     setForm(initialForm);
+    setError("");
   };
 
   const inputClass =
@@ -92,6 +151,12 @@ export default function DemoForm() {
             <SuccessMessage onReset={handleReset} />
           ) : (
             <form onSubmit={handleSubmit}>
+              {error ? (
+                <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              ) : null}
+
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <label htmlFor="kurumAdi" className="mb-1.5 block text-sm font-medium text-dark">
@@ -101,7 +166,6 @@ export default function DemoForm() {
                     id="kurumAdi"
                     name="kurumAdi"
                     type="text"
-                    required
                     value={form.kurumAdi}
                     onChange={handleChange}
                     className={inputClass}
@@ -117,7 +181,6 @@ export default function DemoForm() {
                     id="yetkiliAdi"
                     name="yetkiliAdi"
                     type="text"
-                    required
                     value={form.yetkiliAdi}
                     onChange={handleChange}
                     className={inputClass}
@@ -133,7 +196,6 @@ export default function DemoForm() {
                     id="telefon"
                     name="telefon"
                     type="tel"
-                    required
                     value={form.telefon}
                     onChange={handleChange}
                     className={inputClass}
@@ -149,7 +211,6 @@ export default function DemoForm() {
                     id="email"
                     name="email"
                     type="email"
-                    required
                     value={form.email}
                     onChange={handleChange}
                     className={inputClass}
@@ -159,12 +220,11 @@ export default function DemoForm() {
 
                 <div>
                   <label htmlFor="kurumTuru" className="mb-1.5 block text-sm font-medium text-dark">
-                    Kurum türü *
+                    Kurum türü
                   </label>
                   <select
                     id="kurumTuru"
                     name="kurumTuru"
-                    required
                     value={form.kurumTuru}
                     onChange={handleChange}
                     className={inputClass}
@@ -211,9 +271,10 @@ export default function DemoForm() {
 
               <button
                 type="submit"
-                className="mt-6 w-full min-h-[48px] rounded-xl bg-primary py-4 text-base font-semibold text-white shadow-card transition hover:bg-primary/90 sm:text-sm"
+                disabled={submitting}
+                className="mt-6 w-full min-h-[48px] rounded-xl bg-primary py-4 text-base font-semibold text-white shadow-card transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70 sm:text-sm"
               >
-                Demo Talep Et
+                {submitting ? "Gönderiliyor..." : "Demo Talep Et"}
               </button>
 
               <p className="mt-3 text-center text-xs text-gray-500">
