@@ -1,30 +1,31 @@
-import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
-import Features, {
-  ProblemSection,
-  RolesSection,
-  HowItWorksSection,
-} from "./components/Features";
-import Pricing from "./components/Pricing";
-import Faq from "./components/Faq";
-import DemoForm from "./components/DemoForm";
-import Footer from "./components/Footer";
+import { useEffect, useState } from "react";
+import LandingPage from "./pages/LandingPage";
+import FootballTournamentsPrivacy from "./pages/FootballTournamentsPrivacy";
+
+const PRIVACY_PATH = "/football-tournaments-maker-privacy";
+
+function normalizePath(pathname) {
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    return pathname.slice(0, -1);
+  }
+  return pathname;
+}
 
 export default function App() {
-  return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main>
-        <Hero />
-        <ProblemSection />
-        <Features />
-        <RolesSection />
-        <HowItWorksSection />
-        <Pricing />
-        <Faq />
-        <DemoForm />
-      </main>
-      <Footer />
-    </div>
-  );
+  const [path, setPath] = useState(() => normalizePath(window.location.pathname));
+
+  useEffect(() => {
+    const handleLocationChange = () => {
+      setPath(normalizePath(window.location.pathname));
+    };
+
+    window.addEventListener("popstate", handleLocationChange);
+    return () => window.removeEventListener("popstate", handleLocationChange);
+  }, []);
+
+  if (path === PRIVACY_PATH) {
+    return <FootballTournamentsPrivacy />;
+  }
+
+  return <LandingPage />;
 }
