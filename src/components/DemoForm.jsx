@@ -105,8 +105,32 @@ export default function DemoForm() {
     setError("");
 
     try {
-      await addDoc(collection(db, "demoRequests"), requestData);
+      const docRef = await addDoc(collection(db, "demoRequests"), requestData);
+      console.log("DEMO REQUEST CREATED:", docRef.id);
       console.log("DEMO REQUEST SUCCESS");
+
+      const notificationData = {
+        title: "Yeni demo talebi",
+        message: `${requestData.institutionName} demo talebi gönderdi.`,
+        type: "demo_request",
+        targetRole: "superAdmin",
+        demoRequestId: docRef.id,
+        read: false,
+        createdAt: serverTimestamp(),
+      };
+      console.log("DEMO NOTIFICATION DATA:", notificationData);
+
+      try {
+        await addDoc(collection(db, "notifications"), notificationData);
+        console.log("DEMO REQUEST NOTIFICATION CREATED");
+      } catch (notificationError) {
+        console.log(
+          "DEMO REQUEST NOTIFICATION ERROR:",
+          notificationError.code,
+          notificationError.message,
+        );
+      }
+
       setSubmitted(true);
       setForm(initialForm);
     } catch (err) {
