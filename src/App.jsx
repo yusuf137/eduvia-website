@@ -1,31 +1,40 @@
 import { useEffect, useState } from "react";
 import LandingPage from "./pages/LandingPage";
 import FootballTournamentsPrivacy from "./pages/FootballTournamentsPrivacy";
+import LegalPage from "./pages/LegalPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import { getLegalDocumentByPath, normalizePublicPath } from "./constants/legalDocuments";
 
 const PRIVACY_PATH = "/football-tournaments-maker-privacy";
 
-function normalizePath(pathname) {
-  if (pathname.length > 1 && pathname.endsWith("/")) {
-    return pathname.slice(0, -1);
+function resolvePage(path) {
+  if (path === PRIVACY_PATH) {
+    return <FootballTournamentsPrivacy />;
   }
-  return pathname;
+
+  const legalMeta = getLegalDocumentByPath(path);
+  if (legalMeta) {
+    return <LegalPage docId={legalMeta.id} />;
+  }
+
+  if (path === "/") {
+    return <LandingPage />;
+  }
+
+  return <NotFoundPage />;
 }
 
 export default function App() {
-  const [path, setPath] = useState(() => normalizePath(window.location.pathname));
+  const [path, setPath] = useState(() => normalizePublicPath(window.location.pathname));
 
   useEffect(() => {
     const handleLocationChange = () => {
-      setPath(normalizePath(window.location.pathname));
+      setPath(normalizePublicPath(window.location.pathname));
     };
 
     window.addEventListener("popstate", handleLocationChange);
     return () => window.removeEventListener("popstate", handleLocationChange);
   }, []);
 
-  if (path === PRIVACY_PATH) {
-    return <FootballTournamentsPrivacy />;
-  }
-
-  return <LandingPage />;
+  return resolvePage(path);
 }
