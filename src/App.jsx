@@ -2,14 +2,20 @@ import { useEffect, useState } from "react";
 import LandingPage from "./pages/LandingPage";
 import FootballTournamentsPrivacy from "./pages/FootballTournamentsPrivacy";
 import LegalPage from "./pages/LegalPage";
+import AccountDeletionPage from "./pages/AccountDeletionPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import { getLegalDocumentByPath, normalizePublicPath } from "./constants/legalDocuments";
 
 const PRIVACY_PATH = "/football-tournaments-maker-privacy";
+const ACCOUNT_DELETION_PATH = "/hesap-silme";
 
 function resolvePage(path) {
   if (path === PRIVACY_PATH) {
     return <FootballTournamentsPrivacy />;
+  }
+
+  if (path === ACCOUNT_DELETION_PATH) {
+    return <AccountDeletionPage />;
   }
 
   const legalMeta = getLegalDocumentByPath(path);

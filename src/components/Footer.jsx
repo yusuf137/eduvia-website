@@ -47,6 +47,12 @@ export default function Footer() {
             >
               info@eduvia.com.tr
             </a>
+            <a
+              href="/hesap-silme"
+              className="mt-3 block text-sm text-gray-600 transition hover:text-primary"
+            >
+              Hesap Silme Talebi
+            </a>
           </div>
         </div>
 
